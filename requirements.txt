@@ -1,0 +1,9 @@
+fastapi
+uvicorn
+streamlit
+beautifulsoup4
+authlib
+openai
+google
+googlesearch-python
+BeautifulSoup
