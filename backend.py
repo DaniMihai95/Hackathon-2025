@@ -208,6 +208,83 @@ def get_data_from_csv(sku_or_name: ItemRequest):
     return data
 
 
+MAX_RETRIES = 3
+
+@app.post("/api/fill_template_from_data")
+def fill_template_from_data(req: ProductRequest):
+    """
+    Use GPT-4 (ChatCompletion) to fill in the RTX template with relevant specs.
+    If unknown, leave blank.
+    """
+    product = req.product_name
+    product_json = get_data(product, file_paths)
+
+    # Build the prompt
+    specs_text = get_product_specs(product)
+    user_prompt = (
+        f"You are a helpful AI. We have the following product: {product}.\n"
+        "We scraped these specifications:\n\n"
+        f"{specs_text}\n\n"
+        f"Webshop specs:\n{product_json['specs']}\n\n"
+        "Using this information, check if all the information in Webshop specs matches the info scraped. "
+        "You must focus on filling it in in Dutch and returning it in the format it was sent to you!!! "
+        "Leave the names of the specs and mainspecs as is, dont make them lowercase or use underscores."
+        "if the spec is 'Aantal ventilatoren' leave it as 'Aantal ventilatoren', not as 'aantal_ventilatoren'"
+        "If something is unknown, leave it unchanged.\n\n"
+        "Return only valid JSON."
+    )
+
+    # We'll retry up to MAX_RETRIES times
+    json_data = None
+    for attempt in range(1, MAX_RETRIES + 1):
+        response = client.chat.completions.create(
+            model="gpt-4o-mini",
+            messages=[
+                {"role": "user", "content": user_prompt}
+            ],
+        )
+
+        # If we got no valid choices or message, fail immediately (no reason to retry).
+        if not response.choices or not response.choices[0].message:
+            return JSONResponse(
+                status_code=500,
+                content={"error": f"Invalid response from LLM on attempt {attempt}: No choices or message content."}
+            )
+
+        content = response.choices[0].message.content or ""
+
+        # Remove possible markdown code block delimiters (```json ... ```)
+        json_string = re.sub(r"^```json|```$", "", content.strip(), flags=re.MULTILINE)
+
+        # Try to parse the JSON
+        try:
+            json_data = json.loads(json_string)
+            # If JSON parsing succeeded, break out of the loop
+            break
+        except json.JSONDecodeError as e:
+            if attempt < MAX_RETRIES:
+                # Log or print a warning, then try again
+                print(f"JSON parse failed (attempt {attempt}): {str(e)}. Retrying...")
+            else:
+                # All attempts failed
+                return JSONResponse(
+                    status_code=500,
+                    content={"error": f"JSON parsing failed after {MAX_RETRIES} attempts. Last error: {str(e)}"}
+                )
+
+    # If we get here, we have valid json_data
+    with open("output.json", "w", encoding="utf-8") as json_file:
+        json.dump(json_data, json_file, indent=4)
+
+    return JSONResponse(
+        status_code=200,
+        content={
+            "message": "Extracted JSON successfully",
+            "data": json_data
+        }
+    )
+
+
 
 if __name__ == "__main__":
     uvicorn.run(app, host="127.0.0.1", port=8000)

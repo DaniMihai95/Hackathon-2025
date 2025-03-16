@@ -76,7 +76,7 @@ def get_product_specs(product: str):
 
         try:
             # We'll take the first valid result from that site
-            search_results = search(query, num_results=5)
+            search_results = search(query, stop=5)
             for url in search_results:
                 specs = get_specifications(url)
                 if "Error fetching URL" not in specs:
