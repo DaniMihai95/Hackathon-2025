@@ -12,11 +12,24 @@ def run_streamlit():
 
     if option == "Update an existing product":
         st.subheader("Scrape and Update Specs")
-        product_name = st.text_input("Enter the product name to scrape its specifications:", "")
+        product_name = st.text_input("Enter the product name or SKU to scrape its specifications from trusted sources:", "")
 
         if st.button("Scrape & Fill Template"):
             if product_name:
-                # 1) Call the scrape_specs endpoint
+                # 1) Call the get_data_from_csv
+                with st.spinner("Getting actual data..."):
+                    try:
+                        resp = requests.post("http://127.0.0.1:8000/csv/get_data",
+                                             json={"sku_or_name": product_name})
+                        if resp.status_code == 200:
+                            # actual_data = resp.json().get("actual_specs", {})
+                            pass
+                        else:
+                            st.error("Failed to retrieve specs. Check server or logs.")
+                    except Exception as e:
+                        st.error(f"Error retrieving specs: {e}")
+
+                # 2) Call the scrape_specs endpoint
                 with st.spinner("Scraping specs..."):
                     try:
                         resp = requests.post(
@@ -30,11 +43,11 @@ def run_streamlit():
                     except Exception as e:
                         st.error(f"Error scraping specs: {e}")
 
-                # 2) Call the fill_template endpoint
-                with st.spinner("Calling GPT-4 to fill the JSON template..."):
+                # 3) Call the fill_template endpoint
+                with st.spinner("Calling GPT-4 to update the existing JSON template..."):
                     try:
                         resp2 = requests.post(
-                            "http://127.0.0.1:8000/api/fill_template",
+                            "http://127.0.0.1:8000/api/fill_template_from_data",
                             json={"product_name": product_name}
                         )
                         if resp2.status_code == 200:
