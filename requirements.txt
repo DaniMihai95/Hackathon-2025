@@ -6,4 +6,3 @@ authlib
 openai
 google
 googlesearch-python
-BeautifulSoup
