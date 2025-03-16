@@ -175,9 +175,9 @@ def get_data(sku_or_name, file_paths, is_sku: bool = False):
     # print(extracted_df_sku)
 
     # Search by productName
-    extracted_df_name = extract_product_data("Gigabyte EAGLE GeForce RTX 4060 Ti OC ICE NVIDIA 8 GB GDDR6", file_paths,
+    extracted_df_name = extract_product_data(sku_or_name, file_paths,
                                              is_sku=False)
-    print("\nExtract by productName:")
+    # print("\nExtract by productName:")
     # print(jsonify_product_data(extracted_df_name))
 
     # 2) Convert it to a nested structure: one product dict, plus a list of all its specs
@@ -196,9 +196,9 @@ def get_data(sku_or_name, file_paths, is_sku: bool = False):
 
 
 if __name__ == "__main__":
-
     # Search by productName
-    data = get_data("Gigabyte EAGLE GeForce RTX 4060 Ti OC ICE NVIDIA 8 GB GDDR6", file_paths, is_sku=False)
+    # data = get_data("Gigabyte EAGLE GeForce RTX 4060 Ti OC ICE NVIDIA 8 GB GDDR6", file_paths, is_sku=False)
+    data = get_data("Moederbord Intel MSI B760 GAMING PLUS WIFI", file_paths, is_sku=False)
     print("\nExtract by productName:")
     from pprint import pprint
     pprint(data)
