@@ -1,16 +1,19 @@
 import pandas as pd
 import json
+import os
 
+BASE_DIR = os.path.join(os.path.dirname(__file__), "existing_data")
 
 file_paths = {
-    "prodgroup": "./existing_data/hackaton_prodgroup.csv",
-    "products": "./existing_data/hackaton_products.csv",
-    "specs_raw": "./existing_data/hackaton_specs_raw.csv",
-    "specs": "./existing_data/hackaton_specs.csv"
+    "prodgroup": os.path.join(BASE_DIR, "hackaton_prodgroup.csv"),
+    "products": os.path.join(BASE_DIR, "hackaton_products.csv"),
+    "specs_raw": os.path.join(BASE_DIR, "hackaton_specs_raw.csv"),
+    "specs": os.path.join(BASE_DIR, "hackaton_specs.csv")
 }
 
 
-def extract_product_data(sku_or_name, file_paths, is_sku: bool = False):
+
+def extract_product_data(sku_or_name, file_paths = file_paths, is_sku: bool = False):
     """
     Extracts all related product data given a SKU or product name (or lists of them).
     """
@@ -165,16 +168,15 @@ def jsonify_nested_products(nested_products):
     return json.dumps(clean_data, indent=2)
 
 
-
-if __name__ == "__main__":
-
+def get_data(sku_or_name, file_paths, is_sku: bool = False):
     # # Search by SKU
     # extracted_df_sku = extract_product_data("1110528", file_paths, is_sku=True)
     # print("Extract by SKU:")
     # print(extracted_df_sku)
 
     # Search by productName
-    extracted_df_name = extract_product_data("Gigabyte EAGLE GeForce RTX 4060 Ti OC ICE NVIDIA 8 GB GDDR6", file_paths, is_sku=False)
+    extracted_df_name = extract_product_data("Gigabyte EAGLE GeForce RTX 4060 Ti OC ICE NVIDIA 8 GB GDDR6", file_paths,
+                                             is_sku=False)
     print("\nExtract by productName:")
     # print(jsonify_product_data(extracted_df_name))
 
@@ -187,5 +189,16 @@ if __name__ == "__main__":
     # print(json_string)
     data = json.loads(json_string)
 
+    if isinstance(data, list) and len(data) == 1:
+        return data[0]
+
+    return data
+
+
+if __name__ == "__main__":
+
+    # Search by productName
+    data = get_data("Gigabyte EAGLE GeForce RTX 4060 Ti OC ICE NVIDIA 8 GB GDDR6", file_paths, is_sku=False)
+    print("\nExtract by productName:")
     from pprint import pprint
-    pprint(data[0])
+    pprint(data)

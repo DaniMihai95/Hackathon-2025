@@ -21,6 +21,7 @@ from PC.GPU import RTX_TEMPLATE
 from utils.email_reading import list_inbox_emails, get_email_content_by
 from utils.email_writing import send_official_email
 from utils.basic import get_product_specs
+from data.data_interaction import *
 
 
 #############################
@@ -78,6 +79,8 @@ class RetrieveEmailRequest(BaseModel):
     sender: str
     title: str
 
+class ItemRequest(BaseModel):
+    sku_or_name: str
 
 # ====== FastAPI Endpoints ======
 
@@ -197,6 +200,14 @@ def api_get_email_content(req: RetrieveEmailRequest):
         return {"content": content}
     except Exception as e:
         return {"error": str(e), "content": ""}
+
+
+@app.post("/csv/get_data")
+def get_data_from_csv(sku_or_name: ItemRequest):
+    data = get_data(sku_or_name, file_paths)
+    return data
+
+
 
 if __name__ == "__main__":
     uvicorn.run(app, host="127.0.0.1", port=8000)
